@@ -12,16 +12,14 @@ import java.time.LocalDateTime
 import java.util.UUID
 
 @Entity
-@Table(name = "narrative_layer")
-class NarrativeLayer(
-    @Id @GeneratedValue(strategy = GenerationType.UUID)
+@Table(name = "project")
+class Project(
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
     var id: UUID? = null,
 
-    @Column(name = "narrative_id", nullable = false)
-    var narrativeId: UUID? = null,
-
-    @Column(name = "parent_node_id", nullable = true, unique = true)
-    var parentNodeId: UUID? = null,
+    @Column(nullable = false)
+    var name: String? = null,
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -29,7 +27,5 @@ class NarrativeLayer(
 
     @UpdateTimestamp
     @Column(name = "updated_at", nullable = false)
-    var updatedAt: LocalDateTime? = null,
-    ) {
-
-}
+    var updatedAt: LocalDateTime? = null
+)

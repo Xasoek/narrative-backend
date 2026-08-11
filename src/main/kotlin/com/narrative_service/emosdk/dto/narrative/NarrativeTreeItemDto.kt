@@ -6,6 +6,6 @@ data class NarrativeTreeItemDto(
     var id: UUID,
     val title: String,
     val layerId: UUID,
-    val parentNodeId: UUID,
-    val childLayerId: UUID,
+    val parentNodeId: UUID? = null,
+    val childLayerId: UUID? = null,
 )

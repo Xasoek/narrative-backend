@@ -7,7 +7,10 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
+import org.hibernate.annotations.JdbcTypeCode
 import org.hibernate.annotations.UpdateTimestamp
+import org.hibernate.type.SqlTypes
+import tools.jackson.databind.JsonNode
 import java.time.LocalDateTime
 import java.util.UUID
 
@@ -25,8 +28,9 @@ class NarrativeNode(
     @Column(nullable = false)
     var title: String? = null,
 
-    @Column(columnDefinition = "jsonb")
-    var content: String? = null,
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "content", columnDefinition = "jsonb", nullable = false)
+    var content: JsonNode?? = null,
 
     @Column(name = "position_x", nullable = false)
     var positionX: Double? = null,

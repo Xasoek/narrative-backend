@@ -4,10 +4,13 @@ import com.narrative_service.emosdk.dto.PositionDto
 import com.narrative_service.emosdk.dto.narrative.NarrativeNodeDto
 import com.narrative_service.emosdk.entity.NarrativeNode
 import org.springframework.stereotype.Component
+import tools.jackson.databind.json.JsonMapper
 import java.util.UUID
 
 @Component
-class NarrativeNodeMapper {
+class NarrativeNodeMapper (
+    private val jsonMapper: JsonMapper
+) {
 
     fun toDto(
         node: NarrativeNode,
@@ -17,11 +20,16 @@ class NarrativeNodeMapper {
             id = requireNotNull(node.id),
             layerId = requireNotNull(node.layerId),
             title = requireNotNull(node.title),
-            content = requireNotNull(node.content),
+
+            content = jsonMapper.readTree(
+                requireNotNull(node.content)
+            ),
+
             position = PositionDto(
                 x = requireNotNull(node.positionX),
                 y = requireNotNull(node.positionY)
             ),
+
             childLayerId = childLayerId
         )
     }

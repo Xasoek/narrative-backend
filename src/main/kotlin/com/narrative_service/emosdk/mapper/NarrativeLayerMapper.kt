@@ -10,10 +10,15 @@ import com.narrative_service.emosdk.entity.NarrativeNode
 import com.narrative_service.emosdk.entity.NarrativeNodeReference
 import org.springframework.stereotype.Component
 import tools.jackson.databind.JsonNode
+import tools.jackson.databind.json.JsonMapper
+import tools.jackson.module.kotlin.jacksonObjectMapper
 import java.util.UUID
 
 @Component
-class NarrativeLayerMapper {
+class NarrativeLayerMapper(
+    private val jsonMapper: JsonMapper
+) {
+
 
     fun toDto(
         layer: NarrativeLayer,
@@ -21,6 +26,7 @@ class NarrativeLayerMapper {
         references: List<NarrativeNodeReference>,
         breadcrumbs: List<BreadcrumbDto>,
         childLayerIds: Map<UUID, UUID>
+
     ): NarrativeLayerDto {
 
         return NarrativeLayerDto(
@@ -33,7 +39,7 @@ class NarrativeLayerMapper {
                 LayerNodeDto(
                     id = requireNotNull(node.id),
                     title = requireNotNull(node.title),
-                    excerpt = extractExcerpt(node.content),
+                    excerpt = extractExcerpt(jsonMapper.readTree(node.content)),
                     position = PositionDto(
                         x = requireNotNull(node.positionX),
                         y = requireNotNull(node.positionY)
@@ -51,7 +57,7 @@ class NarrativeLayerMapper {
         )
     }
 
-    private fun extractExcerpt(content: JsonNode?): String? {
+    private fun extractExcerpt(content: JsonNode?): String {
         val textParts = mutableListOf<String>()
         collectText(content, textParts)
 
@@ -59,10 +65,6 @@ class NarrativeLayerMapper {
             .joinToString(" ")
             .replace(Regex("\\s+"), " ")
             .trim()
-
-        if (normalized.isBlank()) {
-            return null
-        }
 
         return normalized.take(EXCERPT_MAX_LENGTH)
     }

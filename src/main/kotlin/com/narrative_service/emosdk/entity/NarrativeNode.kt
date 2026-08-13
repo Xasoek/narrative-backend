@@ -30,7 +30,7 @@ class NarrativeNode(
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "content", columnDefinition = "jsonb", nullable = false)
-    var content: JsonNode? = null,
+    var content: String? = null,
 
     @Column(name = "position_x", nullable = false)
     var positionX: Double? = null,

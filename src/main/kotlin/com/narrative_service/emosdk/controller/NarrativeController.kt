@@ -2,6 +2,7 @@ package com.narrative_service.emosdk.controller
 
 import com.narrative_service.emosdk.dto.ChildLayerDto
 import com.narrative_service.emosdk.dto.NarrativeAssetDto
+import com.narrative_service.emosdk.dto.NarrativeSearchResponse
 import com.narrative_service.emosdk.dto.narrative.CreateNarrativeNodeRequest
 import com.narrative_service.emosdk.dto.narrative.NarrativeDto
 import com.narrative_service.emosdk.dto.narrative.NarrativeLayerDto
@@ -9,7 +10,9 @@ import com.narrative_service.emosdk.dto.narrative.NarrativeNodeDto
 import com.narrative_service.emosdk.dto.narrative.NarrativeTreeDto
 import com.narrative_service.emosdk.dto.narrative.UpdateNarrativeNodeRequest
 import com.narrative_service.emosdk.dto.node.UpdateNodePositionsRequest
+import com.narrative_service.emosdk.search.document.NarrativeNodeDocument
 import com.narrative_service.emosdk.service.NarrativeAssetService
+import com.narrative_service.emosdk.service.NarrativeNodeSearchService
 import com.narrative_service.emosdk.service.NarrativeService
 import org.springframework.http.MediaType
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.multipart.MultipartFile
@@ -28,7 +32,8 @@ import java.util.UUID
 @RequestMapping("/projects/{projectId}/narrative")
 class NarrativeController(
     private val narrativeService: NarrativeService,
-    private val narrativeAssetService: NarrativeAssetService
+    private val narrativeAssetService: NarrativeAssetService,
+    private val narrativeNodeSearchService: NarrativeNodeSearchService
 ) {
     @GetMapping
     fun getNarrative(
@@ -108,5 +113,20 @@ class NarrativeController(
         @PathVariable nodeId: UUID
     ) {
         narrativeService.deleteNode(projectId, nodeId)
+    }
+
+    @GetMapping("/search")
+    fun search(
+        @RequestParam q: String,
+        @RequestParam(defaultValue = "0") page: Int,
+        @RequestParam(defaultValue = "20") size: Int,
+        @PathVariable projectId: UUID
+    ): NarrativeSearchResponse {
+        return narrativeNodeSearchService.search(
+            projectId = projectId,
+            query = q,
+            page = page,
+            size = size
+        )
     }
 }

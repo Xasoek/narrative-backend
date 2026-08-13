@@ -111,6 +111,36 @@ class NarrativeServiceTest {
     }
 
     @Test
+    fun `getLayer uses fallback breadcrumb when project metadata is missing`() {
+        val projectId = UUID.randomUUID()
+        val narrativeId = UUID.randomUUID()
+        val rootLayerId = UUID.randomUUID()
+
+        val narrative = Narrative(
+            id = narrativeId,
+            projectId = projectId,
+            rootLayerId = rootLayerId
+        )
+        val rootLayer = NarrativeLayer(
+            id = rootLayerId,
+            narrativeId = narrativeId,
+            parentNodeId = null
+        )
+
+        Mockito.`when`(narrativeRepository.findByProjectId(projectId)).thenReturn(narrative)
+        Mockito.`when`(narrativeLayerRepository.findByIdAndNarrativeId(rootLayerId, narrativeId)).thenReturn(rootLayer)
+        Mockito.`when`(narrativeNodeRepository.findAllByLayerIdOrderByCreatedAtAscIdAsc(rootLayerId)).thenReturn(emptyList())
+        Mockito.`when`(projectRepository.findById(projectId)).thenReturn(Optional.empty())
+
+        val result = service.getLayer(projectId, rootLayerId)
+
+        assertEquals(1, result.breadcrumbs.size)
+        assertEquals(rootLayerId, result.breadcrumbs[0].layerId)
+        assertEquals(null, result.breadcrumbs[0].nodeId)
+        assertEquals("Проект", result.breadcrumbs[0].title)
+    }
+
+    @Test
     fun `createNode rejects linked nodes outside narrative`() {
         val projectId = UUID.randomUUID()
         val narrativeId = UUID.randomUUID()

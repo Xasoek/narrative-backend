@@ -54,4 +54,31 @@ class NarrativeLayerMapperTest {
 
         assertEquals("Краткое описание", result.nodes.single().excerpt)
     }
+
+    @Test
+    fun `toDto returns empty excerpt when content is missing`() {
+        val layerId = UUID.randomUUID()
+
+        val result = mapper.toDto(
+            layer = NarrativeLayer(
+                id = layerId,
+                narrativeId = UUID.randomUUID()
+            ),
+            nodes = listOf(
+                NarrativeNode(
+                    id = UUID.randomUUID(),
+                    layerId = layerId,
+                    title = "Новая карточка",
+                    content = null,
+                    positionX = 760.0,
+                    positionY = 220.0
+                )
+            ),
+            references = emptyList(),
+            breadcrumbs = emptyList(),
+            childLayerIds = emptyMap()
+        )
+
+        assertEquals("", result.nodes.single().excerpt)
+    }
 }

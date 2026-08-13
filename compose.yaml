@@ -1,9 +1,35 @@
 services:
   postgres:
-    image: 'postgres:latest'
+    image: postgres:18
     environment:
-      - 'POSTGRES_DB=emosdk'
-      - 'POSTGRES_PASSWORD=postgres'
-      - 'POSTGRES_USER=postgres'
+      POSTGRES_DB: emosdk
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
     ports:
-      - '5435:5432'
+      - "5435:5432"
+
+  backend:
+    build: .
+    depends_on:
+      - postgres
+    ports:
+      - "8082:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/emosdk
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+
+  opensearch:
+    image: opensearchproject/opensearch:3.3.2
+    container_name: narrative-opensearch
+    environment:
+      - discovery.type=single-node
+      - DISABLE_SECURITY_PLUGIN=true
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+volumes:
+  opensearch-data:

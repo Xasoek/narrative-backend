@@ -5,6 +5,7 @@ import com.narrative_service.emosdk.dto.NarrativeSearchResponse
 import com.narrative_service.emosdk.entity.NarrativeNode
 import com.narrative_service.emosdk.mapper.NarrativeNodeDocumentMapper
 import com.narrative_service.emosdk.repository.NarrativeNodeRepository
+import com.narrative_service.emosdk.repository.OpenSearchRepository
 import com.narrative_service.emosdk.search.document.NarrativeNodeDocument
 import org.opensearch.client.opensearch.OpenSearchClient
 import org.springframework.stereotype.Service
@@ -13,28 +14,10 @@ import java.util.UUID
 
 @Service
 class NarrativeNodeSearchService(
-    private val openSearchClient: OpenSearchClient,
-    private val narrativeNodeDocumentMapper: NarrativeNodeDocumentMapper,
+    private val openSearchRepository: OpenSearchRepository,
     private val narrativeNodeRepository: NarrativeNodeRepository,
     private val jsonMapper: JsonMapper
 ) {
-
-    fun index(
-        node: NarrativeNode,
-        projectId: UUID
-    ) {
-        val document = narrativeNodeDocumentMapper.toDocument(
-            node = node,
-            projectId = projectId
-        )
-
-        openSearchClient.index { request ->
-            request
-                .index("narrative-nodes")
-                .id(node.id.toString())
-                .document(document)
-        }
-    }
 
     fun search(
         projectId: UUID,
@@ -43,35 +26,11 @@ class NarrativeNodeSearchService(
         size: Int
     ): NarrativeSearchResponse {
 
-        val response = openSearchClient.search(
-            { request ->
-                request
-                    .index("narrative-nodes")
-                    .from(page * size)
-                    .size(size)
-                    .query { q ->
-                        q.bool { bool ->
-                            bool
-                                .must { must ->
-                                    must.multiMatch { multiMatch ->
-                                        multiMatch
-                                            .query(query)
-                                            .fields("title", "content")
-                                    }
-                                }
-                                .filter { filter ->
-                                    filter.term { term ->
-                                        term
-                                            .field("projectId.keyword")
-                                            .value {
-                                                it.stringValue(projectId.toString())
-                                            }
-                                    }
-                                }
-                        }
-                    }
-            },
-            NarrativeNodeDocument::class.java
+        val response = openSearchRepository.search(
+            query = query,
+            projectId = projectId,
+            size = size,
+            page = page
         )
 
         val totalElements = response.hits()
@@ -118,13 +77,5 @@ class NarrativeNodeSearchService(
             size = size,
             items = items
         )
-    }
-
-    fun delete(nodeId: UUID) {
-        openSearchClient.delete { request ->
-            request
-                .index("narrative-nodes")
-                .id(nodeId.toString())
-        }
     }
 }

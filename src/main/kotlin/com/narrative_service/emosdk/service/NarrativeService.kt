@@ -24,6 +24,7 @@ import com.narrative_service.emosdk.repository.NarrativeLayerRepository
 import com.narrative_service.emosdk.repository.NarrativeNodeReferenceRepository
 import com.narrative_service.emosdk.repository.NarrativeNodeRepository
 import com.narrative_service.emosdk.repository.NarrativeRepository
+import com.narrative_service.emosdk.repository.OpenSearchRepository
 import com.narrative_service.emosdk.repository.ProjectRepository
 import jakarta.transaction.Transactional
 import org.springframework.stereotype.Service
@@ -31,7 +32,6 @@ import java.util.UUID
 
 @Service
 class NarrativeService(
-    private val narrativeNodeSearchService: NarrativeNodeSearchService,
     private val narrativeRepository: NarrativeRepository,
     private val narrativeMapper: NarrativeMapper,
     private val narrativeLayerRepository: NarrativeLayerRepository,
@@ -40,7 +40,8 @@ class NarrativeService(
     private val narrativeNodeReferenceRepository: NarrativeNodeReferenceRepository,
     private val narrativeLayerMapper: NarrativeLayerMapper,
     private val narrativeNodeMapper: NarrativeNodeMapper,
-    private val projectRepository: ProjectRepository
+    private val projectRepository: ProjectRepository,
+    private val openSearchRepository: OpenSearchRepository
 ) {
     fun getNarrativeByProjectId(projectId: UUID): NarrativeDto {
         val narrative = narrativeRepository.findByProjectId(projectId)
@@ -173,10 +174,7 @@ class NarrativeService(
 
         val savedNode = narrativeNodeRepository.save(node)
 
-        narrativeNodeSearchService.index(
-            node = savedNode,
-            projectId = projectId
-        )
+        openSearchRepository.index(node = savedNode, projectId = projectId)
 
         val nodeId = requireNotNull(savedNode.id)
 
@@ -249,10 +247,7 @@ class NarrativeService(
 
         val savedNode = narrativeNodeRepository.save(node)
 
-        narrativeNodeSearchService.index(
-            node = savedNode,
-            projectId = projectId
-        )
+        openSearchRepository.index(node = savedNode, projectId = projectId)
 
         val childLayer = narrativeLayerRepository.findByParentNodeId(nodeId)
 
@@ -336,10 +331,10 @@ class NarrativeService(
             ?: throw NarrativeNodeNotFoundException(nodeId)
 
 
-        deleteNodeRecursively(node)
+        deleteNodeRecursively(node, projectId)
     }
 
-    private fun deleteNodeRecursively(node: NarrativeNode) {
+    private fun deleteNodeRecursively(node: NarrativeNode, projectId: UUID) {
         val nodeId = requireNotNull(node.id)
 
         val childLayer = narrativeLayerRepository.findByParentNodeId(nodeId)
@@ -350,7 +345,7 @@ class NarrativeService(
             val childNodes = narrativeNodeRepository.findAllByLayerId(childLayerId)
 
             childNodes.forEach { childNode ->
-                deleteNodeRecursively(childNode)
+                deleteNodeRecursively(childNode, projectId)
             }
 
             narrativeLayerRepository.delete(childLayer)
@@ -360,7 +355,7 @@ class NarrativeService(
         narrativeNodeReferenceRepository.deleteAllByTargetNodeId(nodeId)
 
         narrativeNodeRepository.delete(node)
-        narrativeNodeSearchService.delete(nodeId)
+        openSearchRepository.delete(nodeId, projectId)
     }
 
     private fun buildBreadcrumbs(

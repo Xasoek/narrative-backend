@@ -137,7 +137,8 @@ def build_text(topic):
     for i in range(240):
         sentence = sentences[i % len(sentences)]
         parts.append(
-            f"{sentence} Этот текст относится к теме {topic} и используется для проверки полнотекстового поиска."
+            f"Строка {i + 1}. {sentence} Этот текст относится к теме {topic} "
+            "и используется для проверки полнотекстового поиска."
         )
 
     return " ".join(parts)

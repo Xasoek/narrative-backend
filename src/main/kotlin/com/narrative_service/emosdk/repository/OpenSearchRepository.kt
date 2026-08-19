@@ -19,16 +19,32 @@ class OpenSearchRepository(
         )
 
         openSearchClient.index {request ->
-            request.index("narrative-node-$projectId")
+            request.index(indexName(projectId))
                 .id(node.id.toString())
                 .document(document)
         }
     }
 
+    fun ensureIndex(projectId: UUID) {
+        val indexName = indexName(projectId)
+        val exists = openSearchClient.indices()
+            .exists { request -> request.index(indexName) }
+            .value()
+
+        if (!exists) {
+            openSearchClient.indices()
+                .create { request -> request.index(indexName) }
+        }
+    }
+
+    fun refresh(projectId: UUID) {
+        openSearchClient.indices()
+            .refresh { request -> request.index(indexName(projectId)) }
+    }
 
     fun delete(nodeId: UUID, projectId: UUID) {
         openSearchClient.delete { request ->
-            request.index("narrative-node-$projectId")
+            request.index(indexName(projectId))
                 .id(nodeId.toString())
         }
     }
@@ -38,10 +54,13 @@ class OpenSearchRepository(
         projectId: UUID,
         size: Int,
         page: Int
-    ) = openSearchClient.search(
-        { request ->
-            request
-                .index("narrative-node-$projectId")
+    ) = run {
+        ensureIndex(projectId)
+
+        openSearchClient.search(
+            { request ->
+                request
+                .index(indexName(projectId))
                 .size(size)
                 .from(page * size)
                 .query { q ->
@@ -51,7 +70,12 @@ class OpenSearchRepository(
                             .fields("title", "content")
                     }
                 }
-        },
-        NarrativeNodeDocument::class.java
-    )
+            },
+            NarrativeNodeDocument::class.java
+        )
+    }
+
+    private fun indexName(projectId: UUID): String {
+        return "narrative-node-$projectId"
+    }
 }

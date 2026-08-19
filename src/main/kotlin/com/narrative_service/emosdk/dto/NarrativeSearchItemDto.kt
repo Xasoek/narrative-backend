@@ -7,5 +7,5 @@ data class NarrativeSearchItemDto (
     val id: UUID,
     val layerId: UUID,
     val title: String,
-    val content: JsonNode
+    val content: String
     )
